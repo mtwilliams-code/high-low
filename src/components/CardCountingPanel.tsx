@@ -1,6 +1,7 @@
 import type { FunctionComponent } from "react";
 import { useStore } from "@nanostores/react";
-import { $gameState, toggleCardCountingPanel, toggleCardCounting } from "../store/gameState";
+import { $gameState } from "../store/gameState";
+import { $uiState, toggleCardCountingPanel, toggleCardCounting } from "../store/uiState";
 import { getAllRanks, formatProbability, getCardCounts } from "../utils/probabilityCalculations";
 import type { CardCount, ProbabilityCalculation } from "../types/GameState";
 
@@ -100,10 +101,10 @@ const CardCountingPanel: FunctionComponent<CardCountingPanelProps> = ({
   className = ""
 }) => {
   const gameState = useStore($gameState);
-  const { cardCounting } = gameState;
+  const uiState = useStore($uiState);
   
   // Calculate card counts dynamically from current seen cards for real-time updates
-  const currentCardCounts = getCardCounts(cardCounting.seenCards);
+  const currentCardCounts = getCardCounts(gameState.cardCounting.seenCards);
 
   // Calculate current probabilities based on remaining cards in deck
   const currentProbabilities = (() => {
@@ -140,18 +141,21 @@ const CardCountingPanel: FunctionComponent<CardCountingPanelProps> = ({
     };
   })();
 
-  if (!cardCounting.enabled) {
+  if (!uiState.cardCounting.enabled) {
     return null;
   }
 
   return (
-    <div className={`
-      fixed right-0 top-0 h-full w-80 bg-white/95 backdrop-blur-sm 
-      border-l border-gray-200 shadow-lg z-40
-      transform transition-transform duration-300 ease-out
-      ${cardCounting.panelOpen ? 'translate-x-0' : 'translate-x-full'}
-      ${className}
-    `}>
+    <div 
+      data-testid="card-counting-panel"
+      className={`
+        fixed right-0 top-0 h-full w-80 bg-white/95 backdrop-blur-sm 
+        border-l border-gray-200 shadow-lg z-40
+        transform transition-transform duration-300 ease-out
+        ${uiState.cardCounting.panelOpen ? 'translate-x-0' : 'translate-x-full'}
+        ${className}
+      `}
+    >
       <div className="h-full flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
@@ -179,7 +183,7 @@ const CardCountingPanel: FunctionComponent<CardCountingPanelProps> = ({
               </div>
               <div className="flex justify-between">
                 <span>Cards seen:</span>
-                <span className="font-semibold">{cardCounting.seenCards.length}</span>
+                <span className="font-semibold">{gameState.cardCounting.seenCards.length}</span>
               </div>
               <div className="flex justify-between">
                 <span>Total cards:</span>

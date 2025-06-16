@@ -22,18 +22,10 @@ export interface ProbabilityCalculation {
   total: number;     // Total cards remaining
 }
 
-export interface CardCountingState {
-  enabled: boolean;
-  panelOpen: boolean;
+export interface CardCountingData {
   seenCards: Card[];        // All cards that have been played
   cardCounts: CardCount[];
   probabilities: ProbabilityCalculation | null;
-}
-
-export interface EZModeSettings {
-  enabled: boolean;
-  displayMode: 'percentage' | 'detailed' | 'color-coded';
-  colorByConfidence: boolean;
 }
 
 export type GameState = {
@@ -41,14 +33,7 @@ export type GameState = {
   stacks: Stacks;
   won: boolean;
   lost: boolean;
-  animation: {
-    isAnimating: boolean;
-    flyingCard: Card | null;
-    targetPosition: { row: number; column: number } | null;
-    wasCorrectGuess: boolean;
-  };
-  cardCounting: CardCountingState;
-  ezMode: EZModeSettings;
+  cardCounting: CardCountingData;
 };
 
 export type PlayerMove = {

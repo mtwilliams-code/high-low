@@ -1,15 +1,9 @@
 import type { FunctionComponent } from "react";
-import { useState, useEffect } from "react";
-import { useHapticFeedback } from "../hooks/useHapticFeedback";
 import { useStore } from "@nanostores/react";
 import { $gameState } from "../store/gameState";
+import { $uiState, type StackPosition } from "../store/uiState";
 import { calculateStackProbabilities } from "../utils/probabilityCalculations";
 import EZModeButton from "./EZModeButton";
-
-interface StackPosition {
-  row: 1 | 2 | 3;
-  column: 1 | 2 | 3;
-}
 
 interface MobileActionPanelProps {
   selectedStack: StackPosition | null;
@@ -18,47 +12,6 @@ interface MobileActionPanelProps {
   onClose: () => void;
 }
 
-const ActionButton: FunctionComponent<{
-  action: 'high' | 'low' | 'same';
-  onClick: () => void;
-}> = ({ action, onClick }) => {
-  const { mediumImpact } = useHapticFeedback();
-  
-  const colors = {
-    high: 'bg-green-500 hover:bg-green-600 active:bg-green-700',
-    same: 'bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700',
-    low: 'bg-red-500 hover:bg-red-600 active:bg-red-700'
-  };
-
-  const labels = {
-    high: 'Higher',
-    same: 'Same', 
-    low: 'Lower'
-  };
-
-  const handleClick = () => {
-    mediumImpact();
-    onClick();
-  };
-
-  return (
-    <button
-      className={`
-        ${colors[action]}
-        text-white font-bold py-4 px-6 rounded-lg
-        min-h-[60px] min-w-[100px]
-        flex flex-col items-center justify-center
-        transform transition-all duration-150
-        active:scale-95
-        shadow-lg
-        touch-manipulation
-      `}
-      onClick={handleClick}
-    >
-      <span className="text-lg">{labels[action]}</span>
-    </button>
-  );
-};
 
 const MobileActionPanel: FunctionComponent<MobileActionPanelProps> = ({ 
   selectedStack, 
@@ -68,9 +21,10 @@ const MobileActionPanel: FunctionComponent<MobileActionPanelProps> = ({
 }) => {
   const isVisible = selectedStack && selectedCard;
   const gameState = useStore($gameState);
+  const uiState = useStore($uiState);
   
   // Calculate probabilities for the selected stack
-  const probabilities = selectedStack && gameState.ezMode.enabled
+  const probabilities = selectedStack && uiState.ezMode.enabled
     ? calculateStackProbabilities(gameState.stacks, selectedStack.row, selectedStack.column, gameState.drawDeck.length)
     : null;
 
@@ -90,16 +44,18 @@ const MobileActionPanel: FunctionComponent<MobileActionPanelProps> = ({
       )}
       
       {/* Action Panel - always rendered for smooth animation */}
-      <div className={`
-        fixed bottom-0 left-0 right-0 
-        bg-white/95 backdrop-blur-sm border-t border-gray-200 
-        p-4 shadow-lg z-50 safe-area-bottom
-        transform transition-all duration-500 ease-out
-        ${isVisible 
-          ? 'translate-y-0 opacity-100' 
-          : 'translate-y-full opacity-0 pointer-events-none'
-        }
-      `}>
+      <div 
+        data-testid="mobile-action-panel"
+        className={`
+          fixed bottom-0 left-0 right-0 
+          bg-white/95 backdrop-blur-sm border-t border-gray-200 
+          p-4 shadow-lg z-50 safe-area-bottom
+          transform transition-all duration-500 ease-out
+          ${isVisible 
+            ? 'translate-y-0 opacity-100' 
+            : 'translate-y-full opacity-0 pointer-events-none'
+          }
+        `}>
         {/* Always render content but show/hide with fallback values */}
         <>
           {/* Selected Card Display */}
@@ -129,30 +85,36 @@ const MobileActionPanel: FunctionComponent<MobileActionPanelProps> = ({
           </div>
           
           <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
-            <EZModeButton
-              action="higher"
-              probability={probabilities?.higher || 0}
-              ezMode={gameState.ezMode.enabled}
-              ezModeSettings={gameState.ezMode}
-              onClick={() => handleAction('high')}
-              size="large"
-            />
-            <EZModeButton
-              action="same"
-              probability={probabilities?.same || 0}
-              ezMode={gameState.ezMode.enabled}
-              ezModeSettings={gameState.ezMode}
-              onClick={() => handleAction('same')}
-              size="large"
-            />
-            <EZModeButton
-              action="lower"
-              probability={probabilities?.lower || 0}
-              ezMode={gameState.ezMode.enabled}
-              ezModeSettings={gameState.ezMode}
-              onClick={() => handleAction('low')}
-              size="large"
-            />
+            <div data-testid="action-higher">
+              <EZModeButton
+                action="higher"
+                probability={probabilities?.higher || 0}
+                ezMode={uiState.ezMode.enabled}
+                ezModeSettings={uiState.ezMode}
+                onClick={() => handleAction('high')}
+                size="large"
+              />
+            </div>
+            <div data-testid="action-same">
+              <EZModeButton
+                action="same"
+                probability={probabilities?.same || 0}
+                ezMode={uiState.ezMode.enabled}
+                ezModeSettings={uiState.ezMode}
+                onClick={() => handleAction('same')}
+                size="large"
+              />
+            </div>
+            <div data-testid="action-lower">
+              <EZModeButton
+                action="lower"
+                probability={probabilities?.lower || 0}
+                ezMode={uiState.ezMode.enabled}
+                ezModeSettings={uiState.ezMode}
+                onClick={() => handleAction('low')}
+                size="large"
+              />
+            </div>
           </div>
           
           <div className="flex justify-center mt-4">

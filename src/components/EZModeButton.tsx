@@ -1,6 +1,6 @@
 import type { FunctionComponent } from "react";
 import { formatProbability, getConfidenceLevel } from "../utils/probabilityCalculations";
-import type { EZModeSettings } from "../types/GameState";
+import type { EZModeSettings } from "../store/uiState";
 
 interface EZModeButtonProps {
   action: 'higher' | 'lower' | 'same';
@@ -58,6 +58,12 @@ const EZModeButton: FunctionComponent<EZModeButtonProps> = ({
         return {
           primary: action.charAt(0).toUpperCase() + action.slice(1),
           secondary: `${percentage} ${icons[confidence]}`
+        };
+      
+      default:
+        return {
+          primary: action.charAt(0).toUpperCase() + action.slice(1),
+          secondary: null
         };
     }
   };

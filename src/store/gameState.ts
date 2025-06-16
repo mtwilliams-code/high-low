@@ -1,8 +1,8 @@
 // store/users.ts
 import { atom } from "nanostores";
 import type { Card } from "../types/CardTypes";
-import type { GameState, PlayerMove, Stacks, CardCountingState, EZModeSettings } from "../types/GameState";
-import { getAllVisibleCards, getCardCounts, calculateStackProbabilities } from "../utils/probabilityCalculations";
+import type { GameState, PlayerMove, Stacks, CardCountingData } from "../types/GameState";
+import { getAllVisibleCards, getCardCounts } from "../utils/probabilityCalculations";
 
 class OutOfCardsError extends Error {
   constructor(message: string) {
@@ -68,18 +68,10 @@ const rawDeck: Card[] = (
   ).map((rank) => ({ suit, rank })),
 );
 
-const initialCardCountingState: CardCountingState = {
-  enabled: false,
-  panelOpen: false,
+const initialCardCountingData: CardCountingData = {
   seenCards: [],
   cardCounts: getCardCounts([]),
   probabilities: null
-};
-
-const initialEZModeSettings: EZModeSettings = {
-  enabled: false,
-  displayMode: 'percentage',
-  colorByConfidence: true
 };
 
 export const $gameState = atom<GameState>({
@@ -103,14 +95,7 @@ export const $gameState = atom<GameState>({
   ],
   won: false,
   lost: false,
-  animation: {
-    isAnimating: false,
-    flyingCard: null,
-    targetPosition: null,
-    wasCorrectGuess: true
-  },
-  cardCounting: initialCardCountingState,
-  ezMode: initialEZModeSettings,
+  cardCounting: initialCardCountingData,
 });
 
 /**
@@ -176,12 +161,10 @@ const initializeDeckAndStacks: () => {
 };
 
 export function startNewGame() {
-  const currentState = $gameState.get();
   const { drawDeck, stacks } = initializeDeckAndStacks();
   
-  // Reset card counting state but keep settings
-  const resetCardCountingState: CardCountingState = {
-    ...currentState.cardCounting,
+  // Reset card counting data with starting cards
+  const resetCardCountingData: CardCountingData = {
     seenCards: getAllVisibleCards(stacks), // Initialize with starting cards
     cardCounts: getCardCounts(getAllVisibleCards(stacks)),
     probabilities: null
@@ -192,14 +175,7 @@ export function startNewGame() {
     stacks,
     won: false, 
     lost: false,
-    animation: {
-      isAnimating: false,
-      flyingCard: null,
-      targetPosition: null,
-      wasCorrectGuess: true
-    },
-    cardCounting: resetCardCountingState,
-    ezMode: currentState.ezMode // Keep EZ mode settings
+    cardCounting: resetCardCountingData
   });
 }
 
@@ -224,37 +200,6 @@ export function peekMove(move: PlayerMove): { drawnCard: Card; wouldBeCorrect: b
   return { drawnCard, wouldBeCorrect };
 }
 
-/**
- * Start card animation
- */
-export function startCardAnimation(card: Card, targetRow: number, targetColumn: number, wasCorrectGuess: boolean) {
-  const currentState = $gameState.get();
-  $gameState.set({
-    ...currentState,
-    animation: {
-      isAnimating: true,
-      flyingCard: card,
-      targetPosition: { row: targetRow, column: targetColumn },
-      wasCorrectGuess
-    }
-  });
-}
-
-/**
- * End card animation and clear animation state
- */
-export function endCardAnimation() {
-  const currentState = $gameState.get();
-  $gameState.set({
-    ...currentState,
-    animation: {
-      isAnimating: false,
-      flyingCard: null,
-      targetPosition: null,
-      wasCorrectGuess: true
-    }
-  });
-}
 
 /**
  * Make move without animation - for direct state updates after animation
@@ -263,61 +208,6 @@ export function makeMoveImmediate(move: PlayerMove) {
   makeMove(move);
 }
 
-/**
- * Toggle EZ Mode on/off
- */
-export function toggleEZMode() {
-  const currentState = $gameState.get();
-  $gameState.set({
-    ...currentState,
-    ezMode: {
-      ...currentState.ezMode,
-      enabled: !currentState.ezMode.enabled
-    }
-  });
-}
-
-/**
- * Update EZ Mode settings
- */
-export function updateEZModeSettings(settings: Partial<EZModeSettings>) {
-  const currentState = $gameState.get();
-  $gameState.set({
-    ...currentState,
-    ezMode: {
-      ...currentState.ezMode,
-      ...settings
-    }
-  });
-}
-
-/**
- * Toggle card counting panel
- */
-export function toggleCardCountingPanel() {
-  const currentState = $gameState.get();
-  $gameState.set({
-    ...currentState,
-    cardCounting: {
-      ...currentState.cardCounting,
-      panelOpen: !currentState.cardCounting.panelOpen
-    }
-  });
-}
-
-/**
- * Toggle card counting on/off
- */
-export function toggleCardCounting() {
-  const currentState = $gameState.get();
-  $gameState.set({
-    ...currentState,
-    cardCounting: {
-      ...currentState.cardCounting,
-      enabled: !currentState.cardCounting.enabled
-    }
-  });
-}
 
 
 export function makeMove(move: PlayerMove) {
@@ -369,9 +259,9 @@ export function makeMove(move: PlayerMove) {
         won: currentState.won,
         lost: !stillPlaying,
         cardCounting: {
-          ...currentState.cardCounting,
           seenCards: newSeenCards,
-          cardCounts: getCardCounts(newSeenCards)
+          cardCounts: getCardCounts(newSeenCards),
+          probabilities: null
         }
       });
     }
@@ -404,9 +294,9 @@ export function makeMove(move: PlayerMove) {
         won,
         lost: currentState.lost,
         cardCounting: {
-          ...currentState.cardCounting,
           seenCards: newSeenCards,
-          cardCounts: getCardCounts(newSeenCards)
+          cardCounts: getCardCounts(newSeenCards),
+          probabilities: null
         }
       });
     }

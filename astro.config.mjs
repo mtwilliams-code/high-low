@@ -17,6 +17,10 @@ export default defineConfig({
     imageService: "cloudflare",
   }),
 
+  server: {
+    port: 4444,
+  },
+
   vite: {
     plugins: [tailwindcss()],
     resolve: {

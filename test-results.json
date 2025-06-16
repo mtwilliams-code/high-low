@@ -1,0 +1,5 @@
+
+> high-low@0.0.1 test
+> vitest tests/e2e/desktop-mobile-controls.spec.ts --reporter=json
+
+{"numTotalTestSuites":1,"numPassedTestSuites":0,"numFailedTestSuites":1,"numPendingTestSuites":0,"numTotalTests":0,"numPassedTests":0,"numFailedTests":0,"numPendingTests":0,"numTodoTests":0,"snapshot":{"added":0,"failure":false,"filesAdded":0,"filesRemoved":0,"filesRemovedList":[],"filesUnmatched":0,"filesUpdated":0,"matched":0,"total":0,"unchecked":0,"uncheckedKeysByFile":[],"unmatched":0,"updated":0,"didUpdate":false},"startTime":1750115570916,"success":false,"testResults":[{"assertionResults":[],"startTime":1750115570916,"endTime":1750115570916,"status":"failed","message":"Playwright Test did not expect test.describe() to be called here.\nMost common reasons include:\n- You are calling test.describe() in a configuration file.\n- You are calling test.describe() in a file that is imported by the configuration file.\n- You have two different versions of @playwright/test. This usually happens\n  when one of the dependencies in your package.json depends on @playwright/test.","name":"/Users/mtwilliams/Codebase/high-low/tests/e2e/desktop-mobile-controls.spec.ts"}]}

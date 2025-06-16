@@ -4,9 +4,21 @@ interface CardPileProps {
   count: number;
   children: ReactNode;
   size?: 'small' | 'medium' | 'large';
+  'data-testid'?: string;
+  'data-status'?: string;
+  'data-row'?: number;
+  'data-column'?: number;
 }
 
-const CardPile: FunctionComponent<CardPileProps> = ({ count, children, size = 'large' }) => {
+const CardPile: FunctionComponent<CardPileProps> = ({ 
+  count, 
+  children, 
+  size = 'large',
+  'data-testid': dataTestId,
+  'data-status': dataStatus,
+  'data-row': dataRow,
+  'data-column': dataColumn
+}) => {
   // Responsive dimensions based on card size
   const dimensions = {
     small: { width: '54px', height: '70px', cardClass: 'w-12 h-16' },      // 48px + 6px offset
@@ -17,7 +29,14 @@ const CardPile: FunctionComponent<CardPileProps> = ({ count, children, size = 'l
   const { width, height, cardClass } = dimensions[size];
 
   return (
-    <div className="relative" style={{ width, height }}>
+    <div 
+      className="relative" 
+      style={{ width, height }}
+      data-testid={dataTestId}
+      data-status={dataStatus}
+      data-row={dataRow}
+      data-column={dataColumn}
+    >
       {/* Container with responsive dimensions */}
       <div className="absolute inset-0">
         {/* Background cards to create depth effect - only show if count > 1 */}

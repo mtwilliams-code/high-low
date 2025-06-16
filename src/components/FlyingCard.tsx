@@ -42,6 +42,7 @@ const FlyingCard: FunctionComponent<FlyingCardProps> = ({
 
   return (
     <div
+      data-testid="flying-card"
       className="flying-card fixed pointer-events-none z-50"
       style={{
         left: fromRect.left,
