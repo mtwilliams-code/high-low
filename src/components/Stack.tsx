@@ -4,10 +4,15 @@ import { makeMove } from "../store/gameState";
 import BackCardComponent from "./BackCard";
 import CardComponent from "./Card";
 import CardPile from "./CardPile";
+import { useHapticFeedback } from "../hooks/useHapticFeedback";
 
 interface StackComponentProps extends Stack {
   row: 1 | 2 | 3;
   column: 1 | 2 | 3;
+  selected?: boolean;
+  onSelect?: (row: number, column: number) => void;
+  isMobile?: boolean;
+  useTouchInterface?: boolean;
 }
 
 const StackComponent: FunctionComponent<StackComponentProps> = ({
@@ -15,10 +20,18 @@ const StackComponent: FunctionComponent<StackComponentProps> = ({
   status,
   row,
   column,
+  selected = false,
+  onSelect,
+  isMobile = false,
+  useTouchInterface = false,
 }) => {
   if (cards.length === 0) {
+    const emptyStackClass = isMobile ? 'w-16 h-22' : 'w-20 h-28';
     return (
-      <div className="w-20 h-28 bg-gray-200 border border-gray-400 rounded" />
+      <div className={`
+        bg-gray-200 border border-gray-400 rounded
+        ${emptyStackClass}
+      `} />
     );
   }
 
@@ -35,21 +48,41 @@ const StackComponent: FunctionComponent<StackComponentProps> = ({
     }
   };
 
+  const { lightImpact } = useHapticFeedback();
+
+  const handleStackClick = () => {
+    if (status === "active" && onSelect && useTouchInterface) {
+      lightImpact();
+      onSelect(row, column);
+    }
+  };
+
   if (status === "failed") {
     return (
-      <CardPile count={cards.length}>
-        <BackCardComponent />
+      <CardPile count={cards.length} size={isMobile ? 'medium' : 'large'}>
+        <BackCardComponent size={isMobile ? 'medium' : 'large'} />
       </CardPile>
     );
   }
 
   return (
-    <CardPile count={cards.length}>
-      <div className="relative group">
-        <CardComponent {...topCard} />
+    <CardPile count={cards.length} size={isMobile ? 'medium' : 'large'}>
+      <div className={`
+        relative 
+        ${useTouchInterface ? 'group-touch' : 'group'}
+        ${selected ? 'ring-4 ring-blue-500 bg-blue-50' : ''}
+        transition-all duration-200
+        ${useTouchInterface && status === "active" ? 'active:scale-95 cursor-pointer' : ''}
+      `}>
+        <CardComponent 
+          {...topCard} 
+          size={isMobile ? 'medium' : 'large'}
+          touchOptimized={useTouchInterface}
+          selected={selected}
+        />
         
-        {/* Hover buttons overlay - divided into vertical thirds */}
-        <div className="absolute inset-0 transition-opacity duration-200 z-10 hidden md:flex flex-col rounded-md overflow-clip">
+        {/* Desktop/non-touch hover buttons overlay */}
+        <div className={`absolute inset-0 transition-opacity duration-200 z-10 flex-col rounded-md overflow-clip ${useTouchInterface ? 'hidden' : 'hidden md:flex'}`}>
           {/* Higher button - top third */}
           <button
             onClick={() => handleGuess("high")}
@@ -74,6 +107,15 @@ const StackComponent: FunctionComponent<StackComponentProps> = ({
             Lower
           </button>
         </div>
+
+        {/* Touch device tap target */}
+        {useTouchInterface && status === "active" && (
+          <button
+            className="absolute inset-0 w-full h-full bg-transparent"
+            onClick={handleStackClick}
+            aria-label={`Select stack ${row},${column}`}
+          />
+        )}
       </div>
     </CardPile>
   );

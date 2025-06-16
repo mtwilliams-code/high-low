@@ -1,0 +1,84 @@
+/* Mobile-specific optimizations */
+
+/* Ensure proper touch targets */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 12px;
+  margin: 8px;
+}
+
+/* Prevent zoom on form inputs (iOS) */
+input[type="text"], 
+input[type="number"], 
+select, 
+textarea {
+  font-size: 16px;
+}
+
+/* Improve scrolling on iOS */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Disable text selection on game elements */
+.game-element {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Improve button touch response */
+button {
+  touch-action: manipulation;
+}
+
+/* Safe area handling for notched devices */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .motion-reduce {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .high-contrast {
+    border: 2px solid;
+  }
+}
+
+/* Optimize animations for mobile */
+@media (max-device-width: 768px) and (max-device-height: 1024px) {
+  .mobile-animation {
+    animation-duration: 0.2s;
+    transition-duration: 0.2s;
+  }
+}
+
+/* Disable complex animations on very low-end devices */
+@media (max-device-width: 480px) and (pointer: coarse) {
+  .optional-animation {
+    animation: none;
+    transition: none;
+  }
+}

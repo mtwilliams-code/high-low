@@ -1,15 +1,21 @@
 ---
 import "../styles/global.css";
+import "../styles/mobile.css";
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.json" />
     <meta name="generator" content={Astro.generator} />
-    <title>Astro Basics</title>
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="High-Low" />
+    <title>High-Low Card Game</title>
     <script
       is:inline
       src="https://cardmeister.github.io/elements.cardmeister.min.js"></script>

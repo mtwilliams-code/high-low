@@ -1,0 +1,1 @@
+- use npm run astro check to check for types etc, not npm run dev. If you want to test what the rendered output looks like, just ask the user to do it
