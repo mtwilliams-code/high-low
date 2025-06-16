@@ -1,5 +1,8 @@
 # Mobile-Friendly Enhancement Plan
 
+## Status
+*DONE*
+
 ## Overview
 
 This document outlines the plan for making the High-Low card game fully responsive and optimized for mobile devices, including touch interactions, responsive layouts, and mobile-specific user experience improvements.
