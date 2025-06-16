@@ -15,6 +15,7 @@
   "observability": {
     "enabled": true,
   },
+  "workers_dev": false,
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
@@ -49,4 +50,11 @@
    * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
    */
   // "services": [{ "binding": "MY_SERVICE", "service": "my-service" }]
+
+  "routes": [
+    {
+      "pattern": "high-low.mtw.dev",
+      "custom_domain": true,
+    },
+  ],
 }
