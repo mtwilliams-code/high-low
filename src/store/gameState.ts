@@ -1,7 +1,8 @@
 // store/users.ts
 import { atom } from "nanostores";
 import type { Card } from "../types/CardTypes";
-import type { GameState, PlayerMove, Stacks } from "../types/GameState";
+import type { GameState, PlayerMove, Stacks, CardCountingState, EZModeSettings } from "../types/GameState";
+import { getAllVisibleCards, getCardCounts, calculateStackProbabilities } from "../utils/probabilityCalculations";
 
 class OutOfCardsError extends Error {
   constructor(message: string) {
@@ -67,8 +68,22 @@ const rawDeck: Card[] = (
   ).map((rank) => ({ suit, rank })),
 );
 
+const initialCardCountingState: CardCountingState = {
+  enabled: false,
+  panelOpen: false,
+  seenCards: [],
+  cardCounts: getCardCounts([]),
+  probabilities: null
+};
+
+const initialEZModeSettings: EZModeSettings = {
+  enabled: false,
+  displayMode: 'percentage',
+  colorByConfidence: true
+};
+
 export const $gameState = atom<GameState>({
-  drawDeck: shuffleDeck(rawDeck),
+  drawDeck: [], // Start with empty deck to avoid hydration mismatch
   stacks: [
     [
       { cards: [], status: "active" },
@@ -94,6 +109,8 @@ export const $gameState = atom<GameState>({
     targetPosition: null,
     wasCorrectGuess: true
   },
+  cardCounting: initialCardCountingState,
+  ezMode: initialEZModeSettings,
 });
 
 /**
@@ -159,8 +176,20 @@ const initializeDeckAndStacks: () => {
 };
 
 export function startNewGame() {
+  const currentState = $gameState.get();
+  const { drawDeck, stacks } = initializeDeckAndStacks();
+  
+  // Reset card counting state but keep settings
+  const resetCardCountingState: CardCountingState = {
+    ...currentState.cardCounting,
+    seenCards: getAllVisibleCards(stacks), // Initialize with starting cards
+    cardCounts: getCardCounts(getAllVisibleCards(stacks)),
+    probabilities: null
+  };
+  
   $gameState.set({ 
-    ...initializeDeckAndStacks(), 
+    drawDeck,
+    stacks,
     won: false, 
     lost: false,
     animation: {
@@ -168,7 +197,9 @@ export function startNewGame() {
       flyingCard: null,
       targetPosition: null,
       wasCorrectGuess: true
-    }
+    },
+    cardCounting: resetCardCountingState,
+    ezMode: currentState.ezMode // Keep EZ mode settings
   });
 }
 
@@ -232,6 +263,63 @@ export function makeMoveImmediate(move: PlayerMove) {
   makeMove(move);
 }
 
+/**
+ * Toggle EZ Mode on/off
+ */
+export function toggleEZMode() {
+  const currentState = $gameState.get();
+  $gameState.set({
+    ...currentState,
+    ezMode: {
+      ...currentState.ezMode,
+      enabled: !currentState.ezMode.enabled
+    }
+  });
+}
+
+/**
+ * Update EZ Mode settings
+ */
+export function updateEZModeSettings(settings: Partial<EZModeSettings>) {
+  const currentState = $gameState.get();
+  $gameState.set({
+    ...currentState,
+    ezMode: {
+      ...currentState.ezMode,
+      ...settings
+    }
+  });
+}
+
+/**
+ * Toggle card counting panel
+ */
+export function toggleCardCountingPanel() {
+  const currentState = $gameState.get();
+  $gameState.set({
+    ...currentState,
+    cardCounting: {
+      ...currentState.cardCounting,
+      panelOpen: !currentState.cardCounting.panelOpen
+    }
+  });
+}
+
+/**
+ * Toggle card counting on/off
+ */
+export function toggleCardCounting() {
+  const currentState = $gameState.get();
+  $gameState.set({
+    ...currentState,
+    cardCounting: {
+      ...currentState.cardCounting,
+      enabled: !currentState.cardCounting.enabled
+    }
+  });
+}
+
+
 export function makeMove(move: PlayerMove) {
   const currentState = $gameState.get();
   const { stackRow, stackColumn, highLowSame, card } = move;
@@ -263,6 +351,9 @@ export function makeMove(move: PlayerMove) {
       const updatedStacks: Stacks = [...currentState.stacks];
       updatedStacks[stackRow - 1][stackColumn - 1] = updatedStack;
 
+      // Update card tracking
+      const newSeenCards = [...currentState.cardCounting.seenCards, drawnCard];
+
       // Check if the game is lost
       // If all stacks are failed, the game is lost
       const stillPlaying = updatedStacks.some((row) =>
@@ -277,6 +368,11 @@ export function makeMove(move: PlayerMove) {
         stacks: updatedStacks,
         won: currentState.won,
         lost: !stillPlaying,
+        cardCounting: {
+          ...currentState.cardCounting,
+          seenCards: newSeenCards,
+          cardCounts: getCardCounts(newSeenCards)
+        }
       });
     }
     // correct guess - add the card to the stack and keep it active
@@ -292,6 +388,9 @@ export function makeMove(move: PlayerMove) {
       const updatedStacks: Stacks = [...currentState.stacks];
       updatedStacks[stackRow - 1][stackColumn - 1] = updatedStack;
 
+      // Update card tracking
+      const newSeenCards = [...currentState.cardCounting.seenCards, drawnCard];
+
       // Check if the game is won
       const won = currentState.drawDeck.length === 0;
       if (won) {
@@ -304,6 +403,11 @@ export function makeMove(move: PlayerMove) {
         stacks: updatedStacks,
         won,
         lost: currentState.lost,
+        cardCounting: {
+          ...currentState.cardCounting,
+          seenCards: newSeenCards,
+          cardCounts: getCardCounts(newSeenCards)
+        }
       });
     }
   } catch (e) {

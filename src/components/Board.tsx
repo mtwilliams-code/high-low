@@ -1,11 +1,12 @@
 import { useStore } from "@nanostores/react";
-import { useState, useRef } from "react";
-import { $gameState, startNewGame, makeMove, peekMove, startCardAnimation, endCardAnimation, makeMoveImmediate } from "../store/gameState";
+import { useState, useRef, useEffect } from "react";
+import { $gameState, startNewGame, makeMove, peekMove, startCardAnimation, endCardAnimation, makeMoveImmediate, toggleEZMode, toggleCardCounting, toggleCardCountingPanel } from "../store/gameState";
 import StacksComponent from "./Stacks";
 import CardPile from "./CardPile";
 import BackCardComponent from "./BackCard";
 import MobileActionPanel from "./MobileActionPanel";
 import FlyingCard from "./FlyingCard";
+import CardCountingPanel from "./CardCountingPanel";
 import { useDeviceDetection } from "../hooks/useDeviceDetection";
 
 interface StackPosition {
@@ -26,6 +27,13 @@ const BoardComponent = () => {
 
   // Use touch-based interactions for touch devices OR small screens on any device
   const useTouchInterface = deviceInfo.isTouchDevice || deviceInfo.isMobile;
+
+  // Initialize game on mount to avoid hydration issues
+  useEffect(() => {
+    if (state.drawDeck.length === 0) {
+      startNewGame();
+    }
+  }, [state.drawDeck.length]);
 
   const handleStackSelect = (row: number, column: number) => {
     const stackPosition: StackPosition = { row: row as 1 | 2 | 3, column: column as 1 | 2 | 3 };
@@ -109,7 +117,7 @@ const BoardComponent = () => {
     `}>
       {/* Header Controls */}
       <div id="controls-space" className={`
-        ${deviceInfo.isMobile ? 'w-full flex justify-center mt-2' : ''}
+        ${deviceInfo.isMobile ? 'w-full flex flex-col items-center gap-3 mt-2' : 'flex flex-col items-center gap-2'}
       `}>
         <button
           className={`
@@ -120,6 +128,43 @@ const BoardComponent = () => {
         >
           {deviceInfo.isMobile ? 'New Game' : 'Start New Game'}
         </button>
+        
+        {/* Quick Settings */}
+        <div className={`flex gap-2 ${deviceInfo.isMobile ? 'flex-col' : 'flex-row'}`}>
+          <button
+            onClick={toggleEZMode}
+            className={`
+              px-3 py-1 text-sm rounded transition-colors
+              ${state.ezMode.enabled 
+                ? 'bg-green-500 text-white hover:bg-green-600' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}
+            `}
+          >
+            EZ Mode {state.ezMode.enabled ? 'ON' : 'OFF'}
+          </button>
+          <button
+            onClick={() => {
+              if (state.cardCounting.enabled) {
+                toggleCardCountingPanel();
+              } else {
+                toggleCardCounting();
+              }
+            }}
+            className={`
+              px-3 py-1 text-sm rounded transition-colors
+              ${state.cardCounting.enabled 
+                ? (state.cardCounting.panelOpen 
+                   ? 'bg-purple-600 text-white hover:bg-purple-700' 
+                   : 'bg-purple-500 text-white hover:bg-purple-600')
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}
+            `}
+          >
+            {state.cardCounting.enabled 
+              ? (state.cardCounting.panelOpen ? 'Hide Stats' : 'Show Stats')
+              : 'Card Count OFF'
+            }
+          </button>
+        </div>
       </div>
       
       {/* Deck Display */}
@@ -224,6 +269,9 @@ const BoardComponent = () => {
           onClose={closeMobilePanel}
         />
       )}
+
+      {/* Card Counting Panel */}
+      <CardCountingPanel />
     </div>
   );
 };

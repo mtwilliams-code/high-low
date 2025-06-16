@@ -4,7 +4,11 @@ import { makeMove } from "../store/gameState";
 import BackCardComponent from "./BackCard";
 import CardComponent from "./Card";
 import CardPile from "./CardPile";
+import EZModeButton from "./EZModeButton";
 import { useHapticFeedback } from "../hooks/useHapticFeedback";
+import { calculateStackProbabilities } from "../utils/probabilityCalculations";
+import { useStore } from "@nanostores/react";
+import { $gameState } from "../store/gameState";
 
 interface StackComponentProps extends Stack {
   row: 1 | 2 | 3;
@@ -27,6 +31,16 @@ const StackComponent: FunctionComponent<StackComponentProps> = ({
   useTouchInterface = false,
   onAnimatedMove,
 }) => {
+  // ALL HOOKS MUST BE CALLED AT THE TOP IN THE SAME ORDER EVERY TIME
+  const gameState = useStore($gameState);
+  const { lightImpact } = useHapticFeedback();
+  
+  // Calculate probabilities for this stack if EZ Mode is enabled
+  const probabilities = gameState.ezMode.enabled && status === "active" 
+    ? calculateStackProbabilities(gameState.stacks, row, column, gameState.drawDeck.length)
+    : null;
+
+  // Early returns are OK after all hooks are called
   if (cards.length === 0) {
     const emptyStackClass = isMobile ? 'w-16 h-22' : 'w-20 h-28';
     return (
@@ -53,8 +67,6 @@ const StackComponent: FunctionComponent<StackComponentProps> = ({
       }
     }
   };
-
-  const { lightImpact } = useHapticFeedback();
 
   const handleStackClick = () => {
     if (status === "active" && onSelect && useTouchInterface) {
@@ -92,25 +104,82 @@ const StackComponent: FunctionComponent<StackComponentProps> = ({
           {/* Higher button - top third */}
           <button
             onClick={() => handleGuess("high")}
-            className="flex-1 flex items-center opacity-0 group-hover:opacity-30 hover:!opacity-90 justify-center bg-green-500/70 text-white text-xs font-semibold backdrop-blur-sm transition-all duration-150"
+            className={`
+              flex-1 flex flex-col items-center justify-center opacity-0 group-hover:opacity-30 hover:!opacity-90 
+              text-white text-xs font-semibold backdrop-blur-sm transition-all duration-150
+              ${gameState.ezMode.enabled && gameState.ezMode.colorByConfidence && probabilities
+                ? (() => {
+                    const confidence = probabilities.higher >= 0.6 ? 'high' : 
+                                     probabilities.higher >= 0.35 ? 'medium' : 
+                                     probabilities.higher >= 0.2 ? 'low' : 'very-low';
+                    return confidence === 'high' ? 'bg-green-600/70' :
+                           confidence === 'medium' ? 'bg-amber-500/70' :
+                           confidence === 'low' ? 'bg-red-500/70' : 'bg-gray-500/70';
+                  })()
+                : 'bg-green-500/70'
+              }
+            `}
           >
-            Higher
+            <span>Higher</span>
+            {gameState.ezMode.enabled && probabilities && (
+              <span className="text-xs opacity-90">
+                {Math.round(probabilities.higher * 100)}%
+              </span>
+            )}
           </button>
 
           {/* Same button - middle third */}
           <button
             onClick={() => handleGuess("same")}
-            className="flex-1 flex items-center opacity-0 group-hover:opacity-30 hover:!opacity-90 justify-center bg-yellow-500/70 text-white text-xs font-semibold backdrop-blur-sm transition-all duration-150"
+            className={`
+              flex-1 flex flex-col items-center justify-center opacity-0 group-hover:opacity-30 hover:!opacity-90 
+              text-white text-xs font-semibold backdrop-blur-sm transition-all duration-150
+              ${gameState.ezMode.enabled && gameState.ezMode.colorByConfidence && probabilities
+                ? (() => {
+                    const confidence = probabilities.same >= 0.6 ? 'high' : 
+                                     probabilities.same >= 0.35 ? 'medium' : 
+                                     probabilities.same >= 0.2 ? 'low' : 'very-low';
+                    return confidence === 'high' ? 'bg-green-600/70' :
+                           confidence === 'medium' ? 'bg-amber-500/70' :
+                           confidence === 'low' ? 'bg-red-500/70' : 'bg-gray-500/70';
+                  })()
+                : 'bg-yellow-500/70'
+              }
+            `}
           >
-            Same
+            <span>Same</span>
+            {gameState.ezMode.enabled && probabilities && (
+              <span className="text-xs opacity-90">
+                {Math.round(probabilities.same * 100)}%
+              </span>
+            )}
           </button>
 
           {/* Lower button - bottom third */}
           <button
             onClick={() => handleGuess("low")}
-            className="flex-1 flex items-center opacity-0 group-hover:opacity-30 hover:!opacity-90 justify-center bg-red-500/70 text-white text-xs font-semibold backdrop-blur-sm transition-all duration-150"
+            className={`
+              flex-1 flex flex-col items-center justify-center opacity-0 group-hover:opacity-30 hover:!opacity-90 
+              text-white text-xs font-semibold backdrop-blur-sm transition-all duration-150
+              ${gameState.ezMode.enabled && gameState.ezMode.colorByConfidence && probabilities
+                ? (() => {
+                    const confidence = probabilities.lower >= 0.6 ? 'high' : 
+                                     probabilities.lower >= 0.35 ? 'medium' : 
+                                     probabilities.lower >= 0.2 ? 'low' : 'very-low';
+                    return confidence === 'high' ? 'bg-green-600/70' :
+                           confidence === 'medium' ? 'bg-amber-500/70' :
+                           confidence === 'low' ? 'bg-red-500/70' : 'bg-gray-500/70';
+                  })()
+                : 'bg-red-500/70'
+              }
+            `}
           >
-            Lower
+            <span>Lower</span>
+            {gameState.ezMode.enabled && probabilities && (
+              <span className="text-xs opacity-90">
+                {Math.round(probabilities.lower * 100)}%
+              </span>
+            )}
           </button>
         </div>
 

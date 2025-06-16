@@ -1,5 +1,10 @@
 import type { FunctionComponent } from "react";
+import { useState, useEffect } from "react";
 import { useHapticFeedback } from "../hooks/useHapticFeedback";
+import { useStore } from "@nanostores/react";
+import { $gameState } from "../store/gameState";
+import { calculateStackProbabilities } from "../utils/probabilityCalculations";
+import EZModeButton from "./EZModeButton";
 
 interface StackPosition {
   row: 1 | 2 | 3;
@@ -62,6 +67,12 @@ const MobileActionPanel: FunctionComponent<MobileActionPanelProps> = ({
   onClose 
 }) => {
   const isVisible = selectedStack && selectedCard;
+  const gameState = useStore($gameState);
+  
+  // Calculate probabilities for the selected stack
+  const probabilities = selectedStack && gameState.ezMode.enabled
+    ? calculateStackProbabilities(gameState.stacks, selectedStack.row, selectedStack.column, gameState.drawDeck.length)
+    : null;
 
   const handleAction = (action: 'high' | 'low' | 'same') => {
     onAction(action);
@@ -83,64 +94,76 @@ const MobileActionPanel: FunctionComponent<MobileActionPanelProps> = ({
         fixed bottom-0 left-0 right-0 
         bg-white/95 backdrop-blur-sm border-t border-gray-200 
         p-4 shadow-lg z-50 safe-area-bottom
-        transform transition-all duration-300 ease-out
+        transform transition-all duration-500 ease-out
         ${isVisible 
           ? 'translate-y-0 opacity-100' 
           : 'translate-y-full opacity-0 pointer-events-none'
         }
       `}>
-        {/* Only show content when we have valid data */}
-        {isVisible && selectedCard && selectedStack && (
-          <>
-            {/* Selected Card Display */}
-            <div className="flex flex-col items-center mb-4">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-16 flex items-center justify-center">
+        {/* Always render content but show/hide with fallback values */}
+        <>
+          {/* Selected Card Display */}
+          <div className="flex flex-col items-center mb-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-16 flex items-center justify-center">
+                {selectedCard && (
                   <playing-card 
                     suit={selectedCard.suit} 
                     rank={selectedCard.rank} 
                     className="w-12" 
                   />
-                </div>
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold">
-                    {selectedCard.rank} of {selectedCard.suit}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Stack {selectedStack.row},{selectedStack.column}
-                  </p>
-                </div>
+                )}
               </div>
-              <p className="text-sm text-gray-700 font-medium">
-                Will the next card be:
-              </p>
+              <div className="text-center">
+                <h3 className="text-lg font-semibold">
+                  {selectedCard ? `${selectedCard.rank} of ${selectedCard.suit}` : ''}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {selectedStack ? `Stack ${selectedStack.row},${selectedStack.column}` : ''}
+                </p>
+              </div>
             </div>
-            
-            <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
-              <ActionButton
-                action="high"
-                onClick={() => handleAction('high')}
-              />
-              <ActionButton
-                action="same"
-                onClick={() => handleAction('same')}
-              />
-              <ActionButton
-                action="low"
-                onClick={() => handleAction('low')}
-              />
-            </div>
-            
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={onClose}
-                className="text-gray-500 text-sm px-4 py-2 hover:text-gray-700"
-              >
-                Cancel
-              </button>
-            </div>
-          </>
-        )}
+            <p className="text-sm text-gray-700 font-medium">
+              Will the next card be:
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
+            <EZModeButton
+              action="higher"
+              probability={probabilities?.higher || 0}
+              ezMode={gameState.ezMode.enabled}
+              ezModeSettings={gameState.ezMode}
+              onClick={() => handleAction('high')}
+              size="large"
+            />
+            <EZModeButton
+              action="same"
+              probability={probabilities?.same || 0}
+              ezMode={gameState.ezMode.enabled}
+              ezModeSettings={gameState.ezMode}
+              onClick={() => handleAction('same')}
+              size="large"
+            />
+            <EZModeButton
+              action="lower"
+              probability={probabilities?.lower || 0}
+              ezMode={gameState.ezMode.enabled}
+              ezModeSettings={gameState.ezMode}
+              onClick={() => handleAction('low')}
+              size="large"
+            />
+          </div>
+          
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={onClose}
+              className="text-gray-500 text-sm px-4 py-2 hover:text-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </>
       </div>
     </>
   );
