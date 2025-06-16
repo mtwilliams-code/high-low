@@ -1,21 +1,41 @@
 {
-	"name": "high-low",
-	"type": "module",
-	"version": "0.0.1",
-	"scripts": {
-		"dev": "astro dev",
-		"build": "astro build",
-		"preview": "astro build && wrangler dev",
-		"astro": "astro",
-		"deploy": "astro build && wrangler deploy",
-		"cf-typegen": "wrangler types"
-	},
-	"dependencies": {
-		"@astrojs/cloudflare": "^12.5.4",
-		"astro": "^5.9.3"
-	},
-	"devDependencies": {
-		"@types/node": "^24.0.1",
-		"wrangler": "^4.20.0"
-	}
+  "name": "high-low",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro build && wrangler dev",
+    "astro": "astro",
+    "deploy": "astro build && wrangler deploy",
+    "cf-typegen": "wrangler types",
+    "cli": "tsx cli.js",
+    "test": "vitest",
+    "test:ui": "vitest --ui"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^12.5.4",
+    "@astrojs/react": "^4.3.0",
+    "@letele/playing-cards": "^0.1.0",
+    "@nanostores/react": "^1.0.0",
+    "@tailwindcss/vite": "^4.1.10",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "astro": "^5.9.3",
+    "nanostores": "^1.0.1",
+    "prettier": "^3.5.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tailwindcss": "^4.1.10"
+  },
+  "devDependencies": {
+    "@inquirer/prompts": "^7.5.3",
+    "@types/node": "^24.0.1",
+    "@vitest/ui": "^3.2.3",
+    "chalk": "^5.4.1",
+    "happy-dom": "^18.0.1",
+    "tsx": "^4.20.3",
+    "vitest": "^3.2.3",
+    "wrangler": "^4.20.0"
+  }
 }
