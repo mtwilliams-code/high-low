@@ -13,6 +13,7 @@ interface StackComponentProps extends Stack {
   onSelect?: (row: number, column: number) => void;
   isMobile?: boolean;
   useTouchInterface?: boolean;
+  onAnimatedMove?: (action: 'high' | 'low' | 'same', row: 1 | 2 | 3, column: 1 | 2 | 3) => void;
 }
 
 const StackComponent: FunctionComponent<StackComponentProps> = ({
@@ -24,6 +25,7 @@ const StackComponent: FunctionComponent<StackComponentProps> = ({
   onSelect,
   isMobile = false,
   useTouchInterface = false,
+  onAnimatedMove,
 }) => {
   if (cards.length === 0) {
     const emptyStackClass = isMobile ? 'w-16 h-22' : 'w-20 h-28';
@@ -39,12 +41,16 @@ const StackComponent: FunctionComponent<StackComponentProps> = ({
 
   const handleGuess = (guess: "high" | "low" | "same") => {
     if (status === "active") {
-      makeMove({
-        stackRow: row,
-        stackColumn: column,
-        highLowSame: guess,
-        card: topCard,
-      });
+      if (onAnimatedMove) {
+        onAnimatedMove(guess, row, column);
+      } else {
+        makeMove({
+          stackRow: row,
+          stackColumn: column,
+          highLowSame: guess,
+          card: topCard,
+        });
+      }
     }
   };
 

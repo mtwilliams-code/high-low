@@ -13,6 +13,8 @@ interface StacksComponentProps {
   onStackSelect?: (row: number, column: number) => void;
   isMobile?: boolean;
   useTouchInterface?: boolean;
+  stackRefs?: { current: (HTMLDivElement | null)[][] };
+  onAnimatedMove?: (action: 'high' | 'low' | 'same', row: 1 | 2 | 3, column: 1 | 2 | 3) => void;
 }
 
 const StacksComponent: FunctionComponent<StacksComponentProps> = ({ 
@@ -20,7 +22,9 @@ const StacksComponent: FunctionComponent<StacksComponentProps> = ({
   selectedStack = null,
   onStackSelect,
   isMobile = false,
-  useTouchInterface = false
+  useTouchInterface = false,
+  stackRefs,
+  onAnimatedMove
 }) => {
   return (
     <div className={`
@@ -33,19 +37,28 @@ const StacksComponent: FunctionComponent<StacksComponentProps> = ({
           ${isMobile ? 'gap-3' : 'gap-4'}
         `}>
           {row.map((stack, colIndex) => (
-            <StackComponent
+            <div 
               key={`${rowIndex}-${colIndex}`}
-              {...stack}
-              row={(rowIndex + 1) as 1 | 2 | 3}
-              column={(colIndex + 1) as 1 | 2 | 3}
-              selected={
-                selectedStack?.row === rowIndex + 1 && 
-                selectedStack?.column === colIndex + 1
-              }
-              onSelect={onStackSelect}
-              isMobile={isMobile}
-              useTouchInterface={useTouchInterface}
-            />
+              ref={(el) => {
+                if (stackRefs) {
+                  stackRefs.current[rowIndex][colIndex] = el;
+                }
+              }}
+            >
+              <StackComponent
+                {...stack}
+                row={(rowIndex + 1) as 1 | 2 | 3}
+                column={(colIndex + 1) as 1 | 2 | 3}
+                selected={
+                  selectedStack?.row === rowIndex + 1 && 
+                  selectedStack?.column === colIndex + 1
+                }
+                onSelect={onStackSelect}
+                isMobile={isMobile}
+                useTouchInterface={useTouchInterface}
+                onAnimatedMove={onAnimatedMove}
+              />
+            </div>
           ))}
         </div>
       ))}

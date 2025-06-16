@@ -1,10 +1,11 @@
 import { useStore } from "@nanostores/react";
-import { useState } from "react";
-import { $gameState, startNewGame, makeMove } from "../store/gameState";
+import { useState, useRef } from "react";
+import { $gameState, startNewGame, makeMove, peekMove, startCardAnimation, endCardAnimation, makeMoveImmediate } from "../store/gameState";
 import StacksComponent from "./Stacks";
 import CardPile from "./CardPile";
 import BackCardComponent from "./BackCard";
 import MobileActionPanel from "./MobileActionPanel";
+import FlyingCard from "./FlyingCard";
 import { useDeviceDetection } from "../hooks/useDeviceDetection";
 
 interface StackPosition {
@@ -16,6 +17,12 @@ const BoardComponent = () => {
   const state = useStore($gameState);
   const deviceInfo = useDeviceDetection();
   const [selectedStack, setSelectedStack] = useState<StackPosition | null>(null);
+  const deckRef = useRef<HTMLDivElement>(null);
+  const stackRefs = useRef<(HTMLDivElement | null)[][]>([
+    [null, null, null],
+    [null, null, null],
+    [null, null, null]
+  ]);
 
   // Use touch-based interactions for all touch devices (mobile + tablets)
   const useTouchInterface = deviceInfo.isTouchDevice;
@@ -25,18 +32,60 @@ const BoardComponent = () => {
     setSelectedStack(stackPosition);
   };
 
+  const handleAnimatedMove = async (action: 'high' | 'low' | 'same', stackRow: 1 | 2 | 3, stackColumn: 1 | 2 | 3) => {
+    if (state.animation.isAnimating) return;
+    
+    const stack = state.stacks[stackRow - 1][stackColumn - 1];
+    if (stack.cards.length === 0 || stack.status === "failed") return;
+    
+    const topCard = stack.cards[stack.cards.length - 1];
+    const move = {
+      stackRow,
+      stackColumn,
+      highLowSame: action,
+      card: topCard,
+    };
+    
+    try {
+      // Peek at the move to get the card and result
+      const { drawnCard, wouldBeCorrect } = peekMove(move);
+      
+      // Get element positions
+      const deckElement = deckRef.current;
+      const stackElement = stackRefs.current[stackRow - 1][stackColumn - 1];
+      
+      if (!deckElement || !stackElement) {
+        // Fallback to immediate move if we can't get positions
+        makeMove(move);
+        return;
+      }
+      
+      // Get element positions for animation (positions are used in FlyingCard component)
+      const deckRect = deckElement.getBoundingClientRect();
+      const stackRect = stackElement.getBoundingClientRect();
+      
+      // Start animation
+      startCardAnimation(drawnCard, stackRow, stackColumn, wouldBeCorrect);
+      
+      // Wait for pause + animation to complete before applying move
+      const pauseDuration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 100 : 800;
+      const animationDuration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 50 : 400;
+      const totalDuration = pauseDuration + animationDuration + 50; // Extra 50ms buffer
+      
+      setTimeout(() => {
+        makeMoveImmediate(move);
+        endCardAnimation();
+      }, totalDuration);
+      
+    } catch (error) {
+      console.error("Error in animated move:", error);
+      makeMove(move); // Fallback to immediate move
+    }
+  };
+
   const handleMobileAction = (action: 'high' | 'low' | 'same') => {
     if (selectedStack) {
-      const stack = state.stacks[selectedStack.row - 1][selectedStack.column - 1];
-      if (stack.cards.length > 0) {
-        const topCard = stack.cards[stack.cards.length - 1];
-        makeMove({
-          stackRow: selectedStack.row,
-          stackColumn: selectedStack.column,
-          highLowSame: action,
-          card: topCard,
-        });
-      }
+      handleAnimatedMove(action, selectedStack.row, selectedStack.column);
     }
   };
 
@@ -78,12 +127,14 @@ const BoardComponent = () => {
         flex flex-col items-center
         ${deviceInfo.isMobile ? 'gap-3' : 'gap-2'}
       `}>
-        <CardPile 
-          count={state.drawDeck.length} 
-          size={deviceInfo.isMobile ? 'medium' : 'large'}
-        >
-          <BackCardComponent size={deviceInfo.isMobile ? 'medium' : 'large'} />
-        </CardPile>
+        <div ref={deckRef}>
+          <CardPile 
+            count={state.drawDeck.length} 
+            size={deviceInfo.isMobile ? 'medium' : 'large'}
+          >
+            <BackCardComponent size={deviceInfo.isMobile ? 'medium' : 'large'} />
+          </CardPile>
+        </div>
         <p className={`
           text-gray-600 font-medium text-center
           ${deviceInfo.isMobile ? 'text-base' : 'text-sm'}
@@ -105,6 +156,8 @@ const BoardComponent = () => {
           onStackSelect={handleStackSelect}
           isMobile={deviceInfo.isMobile}
           useTouchInterface={useTouchInterface}
+          stackRefs={stackRefs}
+          onAnimatedMove={handleAnimatedMove}
         />
       </div>
       
@@ -131,6 +184,34 @@ const BoardComponent = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Flying Card Animation */}
+      {state.animation.isAnimating && state.animation.flyingCard && state.animation.targetPosition && (
+        (() => {
+          const deckElement = deckRef.current;
+          const targetRow = state.animation.targetPosition.row;
+          const targetColumn = state.animation.targetPosition.column;
+          const stackElement = stackRefs.current[targetRow - 1][targetColumn - 1];
+          
+          if (deckElement && stackElement) {
+            const deckRect = deckElement.getBoundingClientRect();
+            const stackRect = stackElement.getBoundingClientRect();
+            
+            return (
+              <FlyingCard
+                card={state.animation.flyingCard}
+                fromRect={deckRect}
+                toRect={stackRect}
+                onAnimationComplete={() => {
+                  // Animation completion is handled by the timeout in handleAnimatedMove
+                }}
+                wasCorrectGuess={state.animation.wasCorrectGuess}
+              />
+            );
+          }
+          return null;
+        })()
       )}
 
       {/* Touch Action Panel - render for all touch devices */}

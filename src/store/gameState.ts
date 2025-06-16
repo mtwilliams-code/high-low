@@ -88,6 +88,12 @@ export const $gameState = atom<GameState>({
   ],
   won: false,
   lost: false,
+  animation: {
+    isAnimating: false,
+    flyingCard: null,
+    targetPosition: null,
+    wasCorrectGuess: true
+  },
 });
 
 /**
@@ -153,7 +159,77 @@ const initializeDeckAndStacks: () => {
 };
 
 export function startNewGame() {
-  $gameState.set({ ...initializeDeckAndStacks(), won: false, lost: false });
+  $gameState.set({ 
+    ...initializeDeckAndStacks(), 
+    won: false, 
+    lost: false,
+    animation: {
+      isAnimating: false,
+      flyingCard: null,
+      targetPosition: null,
+      wasCorrectGuess: true
+    }
+  });
+}
+
+/**
+ * Peek at what card would be drawn without actually drawing it
+ * @param move The player move to peek at
+ * @returns The card that would be drawn and whether the guess would be correct
+ */
+export function peekMove(move: PlayerMove): { drawnCard: Card; wouldBeCorrect: boolean } {
+  const currentState = $gameState.get();
+  const { highLowSame, card } = move;
+  
+  if (currentState.drawDeck.length === 0) {
+    throw new OutOfCardsError("No more cards in the deck");
+  }
+  
+  const drawnCard = currentState.drawDeck[currentState.drawDeck.length - 1];
+  const predictedResult = highLowSame === "high" ? 1 : highLowSame === "low" ? -1 : 0;
+  const comparisonResult = compareRanks(drawnCard, card);
+  const wouldBeCorrect = comparisonResult === predictedResult;
+  
+  return { drawnCard, wouldBeCorrect };
+}
+
+/**
+ * Start card animation
+ */
+export function startCardAnimation(card: Card, targetRow: number, targetColumn: number, wasCorrectGuess: boolean) {
+  const currentState = $gameState.get();
+  $gameState.set({
+    ...currentState,
+    animation: {
+      isAnimating: true,
+      flyingCard: card,
+      targetPosition: { row: targetRow, column: targetColumn },
+      wasCorrectGuess
+    }
+  });
+}
+
+/**
+ * End card animation and clear animation state
+ */
+export function endCardAnimation() {
+  const currentState = $gameState.get();
+  $gameState.set({
+    ...currentState,
+    animation: {
+      isAnimating: false,
+      flyingCard: null,
+      targetPosition: null,
+      wasCorrectGuess: true
+    }
+  });
+}
+
+/**
+ * Make move without animation - for direct state updates after animation
+ */
+export function makeMoveImmediate(move: PlayerMove) {
+  makeMove(move);
 }
 
 export function makeMove(move: PlayerMove) {

@@ -13,6 +13,12 @@ export type GameState = {
   stacks: Stacks;
   won: boolean;
   lost: boolean;
+  animation: {
+    isAnimating: boolean;
+    flyingCard: Card | null;
+    targetPosition: { row: number; column: number } | null;
+    wasCorrectGuess: boolean;
+  };
 };
 
 export type PlayerMove = {

@@ -1,0 +1,38 @@
+/* Animation styles for card movements */
+.flying-card {
+  will-change: transform;
+}
+
+/* Respect user's reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .flying-card {
+    transition: none !important;
+    animation-duration: 0.01ms !important;
+  }
+  
+  .flying-card * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Animation for failed move feedback - only affects the overlay */
+@keyframes failureOverlayPulse {
+  0%, 100% { background-color: rgba(239, 68, 68, 0.1); }
+  50% { background-color: rgba(239, 68, 68, 0.3); }
+}
+
+.failure-indicator::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0.375rem;
+  animation: failureOverlayPulse 0.8s ease-in-out 3;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .failure-indicator::after {
+    animation: none;
+  }
+}

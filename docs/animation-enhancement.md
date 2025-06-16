@@ -1,5 +1,8 @@
 # Animation Enhancement Plan
 
+## Status
+*DONE*
+
 ## Overview
 
 This document outlines the plan for adding smooth animations to card moves in the High-Low card game, focusing on native browser technologies for optimal performance and reliability.
