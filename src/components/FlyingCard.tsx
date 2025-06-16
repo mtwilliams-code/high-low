@@ -10,6 +10,7 @@ interface FlyingCardProps {
   toRect: DOMRect;
   onAnimationComplete: () => void;
   wasCorrectGuess: boolean;
+  size?: 'small' | 'medium' | 'large';
 }
 
 const FlyingCard: FunctionComponent<FlyingCardProps> = ({
@@ -17,7 +18,8 @@ const FlyingCard: FunctionComponent<FlyingCardProps> = ({
   fromRect,
   toRect,
   onAnimationComplete,
-  wasCorrectGuess
+  wasCorrectGuess,
+  size = 'large'
 }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const deltaX = toRect.left - fromRect.left;
@@ -67,7 +69,7 @@ const FlyingCard: FunctionComponent<FlyingCardProps> = ({
           `}>
             <CardComponent 
               {...card} 
-              size="large"
+              size={size}
             />
           </div>
         </div>

@@ -24,8 +24,8 @@ const BoardComponent = () => {
     [null, null, null]
   ]);
 
-  // Use touch-based interactions for all touch devices (mobile + tablets)
-  const useTouchInterface = deviceInfo.isTouchDevice;
+  // Use touch-based interactions for touch devices OR small screens on any device
+  const useTouchInterface = deviceInfo.isTouchDevice || deviceInfo.isMobile;
 
   const handleStackSelect = (row: number, column: number) => {
     const stackPosition: StackPosition = { row: row as 1 | 2 | 3, column: column as 1 | 2 | 3 };
@@ -207,6 +207,7 @@ const BoardComponent = () => {
                   // Animation completion is handled by the timeout in handleAnimatedMove
                 }}
                 wasCorrectGuess={state.animation.wasCorrectGuess}
+                size={deviceInfo.isMobile ? 'medium' : 'large'}
               />
             );
           }

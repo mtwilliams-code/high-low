@@ -88,7 +88,7 @@ const StackComponent: FunctionComponent<StackComponentProps> = ({
         />
         
         {/* Desktop/non-touch hover buttons overlay */}
-        <div className={`absolute inset-0 transition-opacity duration-200 z-10 flex-col rounded-md overflow-clip ${useTouchInterface ? 'hidden' : 'hidden md:flex'}`}>
+        <div className={`absolute inset-0 transition-opacity duration-200 z-10 flex-col rounded-md overflow-clip ${useTouchInterface ? 'hidden' : 'hidden group-hover:flex'}`}>
           {/* Higher button - top third */}
           <button
             onClick={() => handleGuess("high")}
